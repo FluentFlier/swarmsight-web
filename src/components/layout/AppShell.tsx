@@ -1,0 +1,96 @@
+import { type ReactNode } from 'react'
+import { useVideoStore } from '../../stores/videoStore'
+import { FileDropzone } from '../shared/FileDropzone'
+import { VideoPlayer } from '../video/VideoPlayer'
+import { VideoControls } from '../video/VideoControls'
+import type { ModuleType } from '../../types/config'
+import { Bug, Activity, X } from 'lucide-react'
+
+interface AppShellProps {
+  activeModule: ModuleType
+  onModuleChange: (module: ModuleType) => void
+  sidebar?: ReactNode
+}
+
+const MODULES: { id: ModuleType; label: string; icon: typeof Bug }[] = [
+  { id: 'appendage_tracker', label: 'Appendage Tracker', icon: Bug },
+  { id: 'motion_analyzer', label: 'Motion Analyzer', icon: Activity },
+]
+
+export function AppShell({ activeModule, onModuleChange, sidebar }: AppShellProps) {
+  const isLoaded = useVideoStore((s) => s.isLoaded)
+  const video = useVideoStore((s) => s.video)
+  const unloadVideo = useVideoStore((s) => s.unloadVideo)
+
+  return (
+    <div className="flex flex-col h-full w-full">
+      {/* Header */}
+      <header className="flex items-center justify-between h-12 px-4 bg-[var(--color-surface-raised)] border-b border-[var(--color-border)] shrink-0">
+        <div className="flex items-center gap-6">
+          <h1 className="text-sm font-semibold tracking-wide">SwarmSight</h1>
+
+          {/* Module tabs */}
+          <nav className="flex items-center gap-1">
+            {MODULES.map((mod) => {
+              const Icon = mod.icon
+              const isActive = activeModule === mod.id
+              return (
+                <button
+                  key={mod.id}
+                  onClick={() => onModuleChange(mod.id)}
+                  className={`
+                    flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors
+                    ${isActive
+                      ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-overlay)]'
+                    }
+                  `}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {mod.label}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+
+        {/* Right side: video info */}
+        {video && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--color-text-muted)] truncate max-w-48">
+              {video.fileName}
+            </span>
+            <span className="text-xs text-[var(--color-text-muted)]">
+              ({(video.fileSize / (1024 * 1024)).toFixed(1)} MB)
+            </span>
+            <button
+              onClick={unloadVideo}
+              className="p-1 rounded hover:bg-[var(--color-surface-overlay)] transition-colors"
+              title="Close video"
+            >
+              <X className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* Main content */}
+      <div className="flex flex-1 min-h-0">
+        {/* Video area */}
+        <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex-1 min-h-0">
+            {isLoaded ? <VideoPlayer /> : <FileDropzone />}
+          </div>
+          {isLoaded && <VideoControls />}
+        </div>
+
+        {/* Sidebar */}
+        {sidebar && (
+          <aside className="w-72 border-l border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-y-auto shrink-0">
+            {sidebar}
+          </aside>
+        )}
+      </div>
+    </div>
+  )
+}
