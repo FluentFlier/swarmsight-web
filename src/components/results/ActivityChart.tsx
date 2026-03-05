@@ -61,7 +61,8 @@ export function ActivityChart({
     )
   }
 
-  const handleClick = (data: { activePayload?: Array<{ payload: { frame: number } }> }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleClick = (data: any) => {
     const frame = data?.activePayload?.[0]?.payload?.frame
     if (frame !== undefined) {
       if (onFrameClick) {

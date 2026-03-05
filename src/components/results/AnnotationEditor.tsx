@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { Crosshair, Check, X } from 'lucide-react'
+import { useState } from 'react'
+import { Crosshair, X } from 'lucide-react'
 
 export interface Correction {
   frame: number
@@ -26,18 +26,6 @@ export function AnnotationEditor({
 
   const frameCorrections = corrections[currentFrame.toString()] || {}
   const hasCorrections = Object.keys(frameCorrections).length > 0
-
-  const handleCanvasClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isActive) return
-
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = ((e.clientX - rect.left) / rect.width) * 200 // standard space
-      const y = ((e.clientY - rect.top) / rect.height) * 200
-      setPendingClick({ x, y })
-    },
-    [isActive]
-  )
 
   const confirmCorrection = (tipType: 'left_tip' | 'right_tip' | 'proboscis_tip') => {
     if (!pendingClick) return

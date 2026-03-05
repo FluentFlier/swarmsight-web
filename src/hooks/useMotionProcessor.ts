@@ -8,10 +8,8 @@ export function useMotionProcessor(
 ) {
   const threshold = useMotionStore((s) => s.threshold)
   const roi = useMotionStore((s) => s.roi)
-  const showMotion = useMotionStore((s) => s.showMotion)
   const addMotionDataPoint = useMotionStore((s) => s.addMotionDataPoint)
   const setCurrentMotionMask = useMotionStore((s) => s.setCurrentMotionMask)
-  const isPlaying = useVideoStore((s) => s.isPlaying)
   const video = useVideoStore((s) => s.video)
   const currentFrame = useVideoStore((s) => s.currentFrame)
 

@@ -60,5 +60,5 @@ self.onmessage = (e: MessageEvent<MotionRequest>) => {
     height,
   }
 
-  self.postMessage(response, [motionMask.buffer])
+  ;(self as unknown as Worker).postMessage(response, [motionMask.buffer] as unknown as Transferable[])
 }

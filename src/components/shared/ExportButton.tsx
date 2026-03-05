@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { Download, FileJson, FileSpreadsheet } from 'lucide-react'
+import { FileJson, FileSpreadsheet } from 'lucide-react'
 import { useVideoStore } from '../../stores/videoStore'
 import { useAppendageStore } from '../../stores/appendageStore'
 import { useMotionStore } from '../../stores/motionStore'
@@ -41,21 +41,18 @@ export function ExportButton({ activeModule, corrections }: ExportButtonProps) {
           totalFrames: video.totalFrames,
         },
       ],
-      corrections: Object.fromEntries(
-        Object.entries(corrections).map(([videoId, frames]) => [
-          videoId,
-          Object.fromEntries(
-            Object.entries(frames).map(([frame, tipCorrections]) => [
-              frame,
-              {
-                leftTip: (tipCorrections as Record<string, { x: number; y: number }>)['left_tip'] ?? null,
-                rightTip: (tipCorrections as Record<string, { x: number; y: number }>)['right_tip'] ?? null,
-                proboscisTip: (tipCorrections as Record<string, { x: number; y: number }>)['proboscis_tip'] ?? null,
-              },
-            ])
-          ),
-        ])
-      ),
+      corrections: {
+        vid_001: Object.fromEntries(
+          Object.entries(corrections).map(([frame, tipCorrections]) => [
+            frame,
+            {
+              leftTip: tipCorrections['left_tip'] ?? null,
+              rightTip: tipCorrections['right_tip'] ?? null,
+              proboscisTip: tipCorrections['proboscis_tip'] ?? null,
+            },
+          ])
+        ),
+      },
     }
 
     if (activeModule === 'appendage_tracker') {

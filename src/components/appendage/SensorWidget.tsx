@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useAppendageStore } from '../../stores/appendageStore'
 import { useVideoStore } from '../../stores/videoStore'
 

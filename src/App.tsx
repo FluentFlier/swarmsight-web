@@ -87,7 +87,7 @@ function App() {
           Export to Colab for batch processing
         </button>
       </div>
-      <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
+      <ExportButton activeModule={activeModule} corrections={corrections} />
     </div>
   ) : (
     <div className="flex flex-col h-full">
@@ -97,7 +97,7 @@ function App() {
         <div className="p-4">
           <AnnotationEditor
             currentFrame={currentFrame}
-            corrections={{ vid_001: corrections }}
+            corrections={corrections}
             onAddCorrection={addCorrection}
             onRemoveCorrection={removeCorrection}
           />
@@ -113,7 +113,7 @@ function App() {
           Export to Colab for batch processing
         </button>
       </div>
-      <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
+      <ExportButton activeModule={activeModule} corrections={corrections} />
     </div>
   )
 

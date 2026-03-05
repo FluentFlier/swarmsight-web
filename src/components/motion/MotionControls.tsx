@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react'
-import { Download, Upload, Play, Trash2 } from 'lucide-react'
+import { Download, Upload, Trash2 } from 'lucide-react'
 import { SensitivityPanel } from './SensitivityPanel'
 import { ROISelector } from './ROISelector'
 import { useMotionStore } from '../../stores/motionStore'
@@ -8,10 +8,8 @@ import { motionDataToCSV, parseMotionCSV, downloadCSV } from '../../lib/csvParse
 
 export function MotionControls() {
   const motionData = useMotionStore((s) => s.motionData)
-  const isProcessing = useMotionStore((s) => s.isProcessing)
   const clearMotionData = useMotionStore((s) => s.clearMotionData)
   const setMotionData = useMotionStore((s) => s.setMotionData)
-  const setProcessing = useMotionStore((s) => s.setProcessing)
   const video = useVideoStore((s) => s.video)
   const importRef = useRef<HTMLInputElement>(null)
 
