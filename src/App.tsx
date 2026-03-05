@@ -1,21 +1,30 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { AppShell } from './components/layout/AppShell'
 import { MotionControls } from './components/motion/MotionControls'
 import { ActivityChart } from './components/results/ActivityChart'
 import { ComparisonView } from './components/results/ComparisonView'
 import { AppendageControls } from './components/appendage/AppendageControls'
+import { AnnotationEditor } from './components/results/AnnotationEditor'
+import { ExportButton } from './components/shared/ExportButton'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useMotionProcessor } from './hooks/useMotionProcessor'
 import { useVideoStore } from './stores/videoStore'
 import { useMotionStore } from './stores/motionStore'
 import type { ModuleType } from './types/config'
 import type { VideoPlayerHandle } from './components/video/VideoPlayer'
+import type { Correction } from './components/results/AnnotationEditor'
 
 function App() {
   const [activeModule, setActiveModule] = useState<ModuleType>('motion_analyzer')
   const playerRef = useRef<VideoPlayerHandle>(null)
   const isLoaded = useVideoStore((s) => s.isLoaded)
+  const currentFrame = useVideoStore((s) => s.currentFrame)
   const motionData = useMotionStore((s) => s.motionData)
+
+  // Corrections state: videoId -> frameNumber -> tipType -> position
+  const [corrections, setCorrections] = useState<
+    Record<string, Record<string, { x: number; y: number }>>
+  >({})
 
   useKeyboardShortcuts()
   useMotionProcessor(
@@ -23,19 +32,62 @@ function App() {
     playerRef.current?.canvasRef ?? { current: null }
   )
 
+  const addCorrection = useCallback((correction: Correction) => {
+    setCorrections((prev) => {
+      const frameKey = correction.frame.toString()
+      const existing = prev[frameKey] || {}
+      return {
+        ...prev,
+        [frameKey]: {
+          ...existing,
+          [correction.tipType]: { x: correction.x, y: correction.y },
+        },
+      }
+    })
+  }, [])
+
+  const removeCorrection = useCallback((frame: number, tipType: string) => {
+    setCorrections((prev) => {
+      const frameKey = frame.toString()
+      const existing = { ...prev[frameKey] }
+      delete existing[tipType]
+      if (Object.keys(existing).length === 0) {
+        const next = { ...prev }
+        delete next[frameKey]
+        return next
+      }
+      return { ...prev, [frameKey]: existing }
+    })
+  }, [])
+
   const sidebar = activeModule === 'motion_analyzer' ? (
-    <div className="flex flex-col h-full overflow-y-auto">
-      <MotionControls />
-      {motionData.length > 0 && (
-        <>
-          <div className="border-t border-[var(--color-border)]" />
-          <ComparisonView />
-        </>
-      )}
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto">
+        <MotionControls />
+        {motionData.length > 0 && (
+          <>
+            <div className="border-t border-[var(--color-border)]" />
+            <ComparisonView />
+          </>
+        )}
+      </div>
+      <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
     </div>
   ) : (
-    <div className="overflow-y-auto h-full">
-      <AppendageControls sourceCanvas={playerRef.current?.canvasRef?.current ?? null} />
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto">
+        <AppendageControls sourceCanvas={playerRef.current?.canvasRef?.current ?? null} />
+        <div className="border-t border-[var(--color-border)] mx-4" />
+        <div className="p-4">
+          <AnnotationEditor
+            currentFrame={currentFrame}
+            corrections={{ vid_001: corrections }}
+            onAddCorrection={addCorrection}
+            onRemoveCorrection={removeCorrection}
+          />
+        </div>
+      </div>
+      <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
     </div>
   )
 
@@ -46,7 +98,7 @@ function App() {
         onModuleChange={setActiveModule}
         sidebar={sidebar}
         playerRef={playerRef}
-        showSensorWidget={activeModule === 'appendage_tracker'}
+        showSensorWidget={activeModule === 'appendage_tracker' && isLoaded}
       />
       {isLoaded && activeModule === 'motion_analyzer' && motionData.length > 0 && (
         <div className="shrink-0 border-t border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-2">
