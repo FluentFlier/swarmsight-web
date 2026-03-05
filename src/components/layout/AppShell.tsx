@@ -1,7 +1,7 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, type RefObject } from 'react'
 import { useVideoStore } from '../../stores/videoStore'
 import { FileDropzone } from '../shared/FileDropzone'
-import { VideoPlayer } from '../video/VideoPlayer'
+import { VideoPlayer, type VideoPlayerHandle } from '../video/VideoPlayer'
 import { VideoControls } from '../video/VideoControls'
 import type { ModuleType } from '../../types/config'
 import { Bug, Activity, X } from 'lucide-react'
@@ -10,6 +10,7 @@ interface AppShellProps {
   activeModule: ModuleType
   onModuleChange: (module: ModuleType) => void
   sidebar?: ReactNode
+  playerRef?: RefObject<VideoPlayerHandle | null>
 }
 
 const MODULES: { id: ModuleType; label: string; icon: typeof Bug }[] = [
@@ -17,19 +18,18 @@ const MODULES: { id: ModuleType; label: string; icon: typeof Bug }[] = [
   { id: 'motion_analyzer', label: 'Motion Analyzer', icon: Activity },
 ]
 
-export function AppShell({ activeModule, onModuleChange, sidebar }: AppShellProps) {
+export function AppShell({ activeModule, onModuleChange, sidebar, playerRef }: AppShellProps) {
   const isLoaded = useVideoStore((s) => s.isLoaded)
   const video = useVideoStore((s) => s.video)
   const unloadVideo = useVideoStore((s) => s.unloadVideo)
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col flex-1 min-h-0 w-full">
       {/* Header */}
       <header className="flex items-center justify-between h-12 px-4 bg-[var(--color-surface-raised)] border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-6">
           <h1 className="text-sm font-semibold tracking-wide">SwarmSight</h1>
 
-          {/* Module tabs */}
           <nav className="flex items-center gap-1">
             {MODULES.map((mod) => {
               const Icon = mod.icon
@@ -54,7 +54,6 @@ export function AppShell({ activeModule, onModuleChange, sidebar }: AppShellProp
           </nav>
         </div>
 
-        {/* Right side: video info */}
         {video && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--color-text-muted)] truncate max-w-48">
@@ -76,15 +75,13 @@ export function AppShell({ activeModule, onModuleChange, sidebar }: AppShellProp
 
       {/* Main content */}
       <div className="flex flex-1 min-h-0">
-        {/* Video area */}
         <div className="flex flex-col flex-1 min-w-0">
           <div className="flex-1 min-h-0">
-            {isLoaded ? <VideoPlayer /> : <FileDropzone />}
+            {isLoaded ? <VideoPlayer ref={playerRef} /> : <FileDropzone />}
           </div>
           {isLoaded && <VideoControls />}
         </div>
 
-        {/* Sidebar */}
         {sidebar && (
           <aside className="w-72 border-l border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-y-auto shrink-0">
             {sidebar}

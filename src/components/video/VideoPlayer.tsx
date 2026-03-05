@@ -1,21 +1,31 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useVideoStore } from '../../stores/videoStore'
+import { useMotionStore } from '../../stores/motionStore'
 
-export function VideoPlayer() {
+export interface VideoPlayerHandle {
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
+}
+
+export const VideoPlayer = forwardRef<VideoPlayerHandle>(function VideoPlayer(_, ref) {
   const video = useVideoStore((s) => s.video)
   const isPlaying = useVideoStore((s) => s.isPlaying)
   const currentFrame = useVideoStore((s) => s.currentFrame)
   const playbackSpeed = useVideoStore((s) => s.playbackSpeed)
   const setCurrentFrame = useVideoStore((s) => s.setCurrentFrame)
   const setPlaying = useVideoStore((s) => s.setPlaying)
+  const showMotion = useMotionStore((s) => s.showMotion)
+  const currentMotionMask = useMotionStore((s) => s.currentMotionMask)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const animFrameRef = useRef<number>(0)
   const lastDrawnFrame = useRef<number>(-1)
 
-  // Draw current video frame to canvas
+  useImperativeHandle(ref, () => ({ videoRef, canvasRef }))
+
   const drawFrame = useCallback(() => {
     const videoEl = videoRef.current
     const canvas = canvasRef.current
@@ -29,19 +39,33 @@ export function VideoPlayer() {
     ctx.drawImage(videoEl, 0, 0, video.width, video.height)
   }, [video])
 
-  // Seek to a specific frame
+  // Draw motion overlay
+  useEffect(() => {
+    const overlay = overlayCanvasRef.current
+    if (!overlay || !video) return
+    const ctx = overlay.getContext('2d')
+    if (!ctx) return
+
+    overlay.width = video.width
+    overlay.height = video.height
+
+    if (showMotion && currentMotionMask) {
+      ctx.putImageData(currentMotionMask, 0, 0)
+    } else {
+      ctx.clearRect(0, 0, video.width, video.height)
+    }
+  }, [showMotion, currentMotionMask, video])
+
   const seekToFrame = useCallback(
     (frame: number) => {
       const videoEl = videoRef.current
       if (!videoEl || !video) return
-
-      const time = frame / video.fps
-      videoEl.currentTime = time
+      videoEl.currentTime = frame / video.fps
     },
     [video]
   )
 
-  // Handle playback loop
+  // Playback loop
   useEffect(() => {
     const videoEl = videoRef.current
     if (!videoEl || !video) return
@@ -67,7 +91,7 @@ export function VideoPlayer() {
     }
   }, [isPlaying, playbackSpeed, video, drawFrame, setCurrentFrame, setPlaying])
 
-  // Handle frame seeking (when paused and frame changes externally)
+  // Seek when paused
   useEffect(() => {
     if (isPlaying) return
     if (currentFrame === lastDrawnFrame.current) return
@@ -76,29 +100,26 @@ export function VideoPlayer() {
     if (!videoEl || !video) return
 
     lastDrawnFrame.current = currentFrame
-    const time = currentFrame / video.fps
-    videoEl.currentTime = time
+    videoEl.currentTime = currentFrame / video.fps
 
     const onSeeked = () => {
       drawFrame()
       videoEl.removeEventListener('seeked', onSeeked)
     }
     videoEl.addEventListener('seeked', onSeeked)
-
     return () => videoEl.removeEventListener('seeked', onSeeked)
   }, [currentFrame, isPlaying, video, drawFrame])
 
-  // Handle video end
+  // Video end
   useEffect(() => {
     const videoEl = videoRef.current
     if (!videoEl) return
-
     const onEnded = () => setPlaying(false)
     videoEl.addEventListener('ended', onEnded)
     return () => videoEl.removeEventListener('ended', onEnded)
   }, [setPlaying])
 
-  // Initial frame draw on load
+  // Initial load
   useEffect(() => {
     const videoEl = videoRef.current
     if (!videoEl || !video) return
@@ -115,7 +136,6 @@ export function VideoPlayer() {
       videoEl.addEventListener('seeked', onSeeked)
     }
     videoEl.addEventListener('loadeddata', onLoaded, { once: true })
-
     return () => videoEl.removeEventListener('loadeddata', onLoaded)
   }, [video, drawFrame, seekToFrame])
 
@@ -124,13 +144,17 @@ export function VideoPlayer() {
   return (
     <div ref={containerRef} className="relative flex items-center justify-center w-full h-full bg-black">
       <video ref={videoRef} className="hidden" muted playsInline preload="auto" />
-      <canvas
-        ref={canvasRef}
-        className="max-w-full max-h-full object-contain"
-        style={{
-          aspectRatio: `${video.width} / ${video.height}`,
-        }}
-      />
+      <div className="relative max-w-full max-h-full" style={{ aspectRatio: `${video.width} / ${video.height}` }}>
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+        />
+        <canvas
+          ref={overlayCanvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ mixBlendMode: 'screen' }}
+        />
+      </div>
     </div>
   )
-}
+})
