@@ -3,6 +3,7 @@ import { useVideoStore } from '../../stores/videoStore'
 import { FileDropzone } from '../shared/FileDropzone'
 import { VideoPlayer, type VideoPlayerHandle } from '../video/VideoPlayer'
 import { VideoControls } from '../video/VideoControls'
+import { SensorWidget } from '../appendage/SensorWidget'
 import type { ModuleType } from '../../types/config'
 import { Bug, Activity, X } from 'lucide-react'
 
@@ -11,6 +12,7 @@ interface AppShellProps {
   onModuleChange: (module: ModuleType) => void
   sidebar?: ReactNode
   playerRef?: RefObject<VideoPlayerHandle | null>
+  showSensorWidget?: boolean
 }
 
 const MODULES: { id: ModuleType; label: string; icon: typeof Bug }[] = [
@@ -18,14 +20,13 @@ const MODULES: { id: ModuleType; label: string; icon: typeof Bug }[] = [
   { id: 'motion_analyzer', label: 'Motion Analyzer', icon: Activity },
 ]
 
-export function AppShell({ activeModule, onModuleChange, sidebar, playerRef }: AppShellProps) {
+export function AppShell({ activeModule, onModuleChange, sidebar, playerRef, showSensorWidget }: AppShellProps) {
   const isLoaded = useVideoStore((s) => s.isLoaded)
   const video = useVideoStore((s) => s.video)
   const unloadVideo = useVideoStore((s) => s.unloadVideo)
 
   return (
     <div className="flex flex-col flex-1 min-h-0 w-full">
-      {/* Header */}
       <header className="flex items-center justify-between h-12 px-4 bg-[var(--color-surface-raised)] border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-6">
           <h1 className="text-sm font-semibold tracking-wide">SwarmSight</h1>
@@ -73,17 +74,23 @@ export function AppShell({ activeModule, onModuleChange, sidebar, playerRef }: A
         )}
       </header>
 
-      {/* Main content */}
       <div className="flex flex-1 min-h-0">
         <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex-1 min-h-0">
-            {isLoaded ? <VideoPlayer ref={playerRef} /> : <FileDropzone />}
+          <div className="flex-1 min-h-0 relative">
+            {isLoaded ? (
+              <>
+                <VideoPlayer ref={playerRef} />
+                {showSensorWidget && <SensorWidget />}
+              </>
+            ) : (
+              <FileDropzone />
+            )}
           </div>
           {isLoaded && <VideoControls />}
         </div>
 
         {sidebar && (
-          <aside className="w-72 border-l border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-y-auto shrink-0">
+          <aside className="w-80 border-l border-[var(--color-border)] bg-[var(--color-surface-raised)] shrink-0">
             {sidebar}
           </aside>
         )}

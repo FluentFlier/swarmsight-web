@@ -3,6 +3,7 @@ import { AppShell } from './components/layout/AppShell'
 import { MotionControls } from './components/motion/MotionControls'
 import { ActivityChart } from './components/results/ActivityChart'
 import { ComparisonView } from './components/results/ComparisonView'
+import { AppendageControls } from './components/appendage/AppendageControls'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useMotionProcessor } from './hooks/useMotionProcessor'
 import { useVideoStore } from './stores/videoStore'
@@ -23,7 +24,7 @@ function App() {
   )
 
   const sidebar = activeModule === 'motion_analyzer' ? (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-y-auto">
       <MotionControls />
       {motionData.length > 0 && (
         <>
@@ -33,10 +34,8 @@ function App() {
       )}
     </div>
   ) : (
-    <div className="p-4">
-      <p className="text-xs text-[var(--color-text-muted)]">
-        Appendage tracker controls coming soon.
-      </p>
+    <div className="overflow-y-auto h-full">
+      <AppendageControls sourceCanvas={playerRef.current?.canvasRef?.current ?? null} />
     </div>
   )
 
@@ -47,8 +46,8 @@ function App() {
         onModuleChange={setActiveModule}
         sidebar={sidebar}
         playerRef={playerRef}
+        showSensorWidget={activeModule === 'appendage_tracker'}
       />
-      {/* Bottom activity chart */}
       {isLoaded && activeModule === 'motion_analyzer' && motionData.length > 0 && (
         <div className="shrink-0 border-t border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-2">
           <ActivityChart height={120} />
