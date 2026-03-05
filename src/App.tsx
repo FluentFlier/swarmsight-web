@@ -1,27 +1,33 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, lazy, Suspense } from 'react'
 import { AppShell } from './components/layout/AppShell'
 import { MotionControls } from './components/motion/MotionControls'
 import { ActivityChart } from './components/results/ActivityChart'
-import { ComparisonView } from './components/results/ComparisonView'
 import { AppendageControls } from './components/appendage/AppendageControls'
 import { AnnotationEditor } from './components/results/AnnotationEditor'
 import { ExportButton } from './components/shared/ExportButton'
+import { ColabExportModal } from './components/shared/ColabExportModal'
+import { OnboardingTooltip } from './components/shared/OnboardingTooltip'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useMotionProcessor } from './hooks/useMotionProcessor'
 import { useVideoStore } from './stores/videoStore'
 import { useMotionStore } from './stores/motionStore'
+import { Cloud } from 'lucide-react'
 import type { ModuleType } from './types/config'
 import type { VideoPlayerHandle } from './components/video/VideoPlayer'
 import type { Correction } from './components/results/AnnotationEditor'
 
+const ComparisonView = lazy(() =>
+  import('./components/results/ComparisonView').then((m) => ({ default: m.ComparisonView }))
+)
+
 function App() {
   const [activeModule, setActiveModule] = useState<ModuleType>('motion_analyzer')
+  const [showColabModal, setShowColabModal] = useState(false)
   const playerRef = useRef<VideoPlayerHandle>(null)
   const isLoaded = useVideoStore((s) => s.isLoaded)
   const currentFrame = useVideoStore((s) => s.currentFrame)
   const motionData = useMotionStore((s) => s.motionData)
 
-  // Corrections state: videoId -> frameNumber -> tipType -> position
   const [corrections, setCorrections] = useState<
     Record<string, Record<string, { x: number; y: number }>>
   >({})
@@ -65,11 +71,21 @@ function App() {
       <div className="flex-1 overflow-y-auto">
         <MotionControls />
         {motionData.length > 0 && (
-          <>
+          <Suspense fallback={<div className="p-4 text-xs text-[var(--color-text-muted)]">Loading...</div>}>
             <div className="border-t border-[var(--color-border)]" />
             <ComparisonView />
-          </>
+          </Suspense>
         )}
+      </div>
+      <div className="border-t border-[var(--color-border)]">
+        <button
+          onClick={() => setShowColabModal(true)}
+          className="flex items-center gap-2 w-full px-4 py-2 text-xs text-[var(--color-text-muted)]
+            hover:text-[var(--color-text)] hover:bg-[var(--color-surface-overlay)] transition-colors"
+        >
+          <Cloud className="w-3.5 h-3.5" />
+          Export to Colab for batch processing
+        </button>
       </div>
       <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
     </div>
@@ -86,6 +102,16 @@ function App() {
             onRemoveCorrection={removeCorrection}
           />
         </div>
+      </div>
+      <div className="border-t border-[var(--color-border)]">
+        <button
+          onClick={() => setShowColabModal(true)}
+          className="flex items-center gap-2 w-full px-4 py-2 text-xs text-[var(--color-text-muted)]
+            hover:text-[var(--color-text)] hover:bg-[var(--color-surface-overlay)] transition-colors"
+        >
+          <Cloud className="w-3.5 h-3.5" />
+          Export to Colab for batch processing
+        </button>
       </div>
       <ExportButton activeModule={activeModule} corrections={{ vid_001: corrections }} />
     </div>
@@ -105,6 +131,9 @@ function App() {
           <ActivityChart height={120} />
         </div>
       )}
+
+      <ColabExportModal isOpen={showColabModal} onClose={() => setShowColabModal(false)} />
+      <OnboardingTooltip />
     </div>
   )
 }

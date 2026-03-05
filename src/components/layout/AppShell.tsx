@@ -4,8 +4,9 @@ import { FileDropzone } from '../shared/FileDropzone'
 import { VideoPlayer, type VideoPlayerHandle } from '../video/VideoPlayer'
 import { VideoControls } from '../video/VideoControls'
 import { SensorWidget } from '../appendage/SensorWidget'
+import { KeyboardHelp } from '../shared/KeyboardHelp'
 import type { ModuleType } from '../../types/config'
-import { Bug, Activity, X } from 'lucide-react'
+import { Bug, Activity, X, Github } from 'lucide-react'
 
 interface AppShellProps {
   activeModule: ModuleType
@@ -55,23 +56,36 @@ export function AppShell({ activeModule, onModuleChange, sidebar, playerRef, sho
           </nav>
         </div>
 
-        {video && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--color-text-muted)] truncate max-w-48">
-              {video.fileName}
-            </span>
-            <span className="text-xs text-[var(--color-text-muted)]">
-              ({(video.fileSize / (1024 * 1024)).toFixed(1)} MB)
-            </span>
-            <button
-              onClick={unloadVideo}
-              className="p-1 rounded hover:bg-[var(--color-surface-overlay)] transition-colors"
-              title="Close video"
-            >
-              <X className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {video && (
+            <>
+              <span className="text-xs text-[var(--color-text-muted)] truncate max-w-48">
+                {video.fileName}
+              </span>
+              <span className="text-xs text-[var(--color-text-muted)]">
+                ({(video.fileSize / (1024 * 1024)).toFixed(1)} MB)
+              </span>
+              <button
+                onClick={unloadVideo}
+                className="p-1 rounded hover:bg-[var(--color-surface-overlay)] transition-colors"
+                title="Close video"
+              >
+                <X className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+              </button>
+              <div className="w-px h-4 bg-[var(--color-border)]" />
+            </>
+          )}
+          <KeyboardHelp />
+          <a
+            href="https://github.com/FluentFlier/swarmsight-web"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 rounded hover:bg-[var(--color-surface-overlay)] transition-colors"
+            title="GitHub"
+          >
+            <Github className="w-4 h-4 text-[var(--color-text-muted)]" />
+          </a>
+        </div>
       </header>
 
       <div className="flex flex-1 min-h-0">
